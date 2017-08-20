@@ -152,16 +152,20 @@ struct meta {
                 acc.append("\": ");
                 auto v(mkjson(val));
                 acc.append(v);
-                acc.append(", "); });
+                acc.append(", ");
+                return true; });
         if (acc.size() > 1) acc.erase(acc.begin() + acc.size() - 2, acc.end());
         acc.append("}");
         return acc; }
     void serialise(serialiser & t) const {
-        inner().visit([&](const char *, auto & val) { t.serialise(val); }); }
+        inner().visit(
+            [&](const char *, auto & val) { t.serialise(val); return true; }); }
     void deserialise(deserialiser & t) {
-        inner().visit([&](const char *, auto & val) { t.deserialise(val); }); }
+        inner().visit(
+            [&](const char *, auto & val) { t.deserialise(val); return true;});}
     void randomise(randomiser & t) {
-        inner().visit([&](const char *, auto & val) { t.randomise(val); }); }
+        inner().visit(
+            [&](const char *, auto & val) { t.randomise(val); return true; }); }
 };
 
 struct testkey : meta<testkey> {
@@ -174,9 +178,9 @@ struct testkey : meta<testkey> {
 
     explicit testkey() : testkey("") {}
 
-    template <typename visitor> void visit(visitor && v) {
-        v("what", what);
-        v("number", number);
+    template <typename visitor> bool visit(visitor && v) {
+        return v("what", what) &&
+            v("number", number);
     }
 
 };
@@ -190,7 +194,8 @@ static std::string mkstr(int what) {
 int main() {
     testkey t{"FOOOO"};
     t.visit([](char const * name, auto val){
-            printf("name %s, val %s\n", name, mkstr(val).c_str()); });
+            printf("name %s, val %s\n", name, mkstr(val).c_str());
+            return true; });
     t.number = 0x1234567;
     std::string json(mkjson(t));
     printf("jsonised %s\n", json.c_str());
