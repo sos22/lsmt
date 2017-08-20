@@ -118,7 +118,18 @@ void testserialise() {
     testkey t3;
     rand.randomise(t3);
     std::string json3(mkjson(t3));
-    printf("randomised %s\n", json3.c_str()); }
+    printf("randomised %s\n", json3.c_str());
+
+    for (unsigned x = 0; x < 100000; x++) {
+        testkey a;
+        a.randomise(rand);
+        serialiser ser;
+        a.serialise(ser);
+        deserialiser deser(ser.stage, ser.cursor);
+        testkey b;
+        b.deserialise(deser);
+        assert(!deser.failed());
+        assert(a == b); } }
 
 void testoperators() {
     assert(threeints(0, 0, 0) < threeints(0,0,1));
@@ -129,8 +140,21 @@ bool structA::operator<(structA const & o) const { return v < o.v; }
 
 bool structB::operator<(structB const & o) const { return v < o.v; }
 
+void test1() {
+    threeints a(1,2,3);
+    randomiser rand;
+    a.randomise(rand);
+    serialiser ser;
+    a.serialise(ser);
+    deserialiser deser(ser.stage, ser.cursor);
+    threeints b(5,6,7);
+    b.deserialise(deser);
+    assert(!deser.failed());
+    assert(a == b); }
+
 int main() {
     testserialise();
     testoperators();
     dotest();
+    test2();
     return 0; }

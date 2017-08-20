@@ -59,5 +59,7 @@ struct simplecompare : meta<simplecompare> {
     template <typename visitor> static bool visit(visitor && v) {
         return v("a", &simplecompare::a) && v("b", &simplecompare::b); } };
 
+void test2() { test1(); }
+
 bool docompare(simplecompare &a, simplecompare &b) {
     return a == b; }

@@ -3,16 +3,19 @@
 
 struct structA {
     int v;
-    explicit structA(int _v) : v(_v) {}
+    explicit structA(int _v = 0) : v(_v) {}
     bool operator<(structA const &) const;
 };
 
 struct structB {
     int v;
-    explicit structB(int _v) : v(_v) {}
+    explicit structB(int _v = 0) : v(_v) {}
     bool operator<(structB const &) const; };
 
 void dotest();
+
+void test1();
+void test2();
 
 struct inlineable {
     int v;

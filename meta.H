@@ -12,6 +12,8 @@ struct serialiser {
     size_t allocated {0};
     size_t cursor {0};
 
+    ~serialiser() { free(stage); }
+
     void pushbytes(void const * what, size_t sz) {
         if (sz + cursor > allocated) {
             allocated += 4096;
@@ -42,11 +44,11 @@ struct deserialiser {
     size_t const size;
     size_t offset{0};
 
+    bool failed() const { return offset > size; }
+
     static const char _zeroes[128];
 
     deserialiser(void const * _buf, size_t _size) : buf(_buf), size(_size) {}
-
-    ~deserialiser() { free((void *)buf); }
 
     void const * getbytes(size_t sz) {
         if (offset + sz > size) {
@@ -95,8 +97,8 @@ struct randomiser {
 
 template <typename what>
 struct meta {
-    what & inner() const {
-        return *const_cast<what *>(static_cast<what const *>(this)); }
+    what const & inner() const { return *static_cast<what const *>(this); }
+    what & inner() { return *static_cast<what *>(this); }
     std::string json() const {
         std::string acc;
         acc.append("{");
@@ -139,7 +141,8 @@ struct meta {
                 else return true; });
         return lt; } };
 
-// Assume we already have operator <. Derive some more.
+// Assume we already have operator <. Derive some more relational
+// operators.
 template <typename a> bool operator>=(const a & x, const a & y) {
     return !(x < y); }
 template <typename a> bool operator>(const a & x, const a & y) {
