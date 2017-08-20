@@ -104,7 +104,7 @@ struct meta {
                 acc.append("\"");
                 acc.append(name);
                 acc.append("\": ");
-                auto v(mkjson(val));
+                auto v(mkjson(inner().*val));
                 acc.append(v);
                 acc.append(", ");
                 return true; });
@@ -113,27 +113,24 @@ struct meta {
         return acc; }
     void serialise(serialiser & t) const {
         inner().visit(
-            [&](const char *, auto & val) { t.serialise(val); return true; }); }
+            [&](const char *, auto val) {
+                t.serialise(inner().*val); return true; }); }
     void deserialise(deserialiser & t) {
         inner().visit(
-            [&](const char *, auto & val) { t.deserialise(val); return true;});}
+            [&](const char *, auto val) {
+                t.deserialise(inner().*val); return true;});}
     void randomise(randomiser & t) {
         inner().visit(
-            [&](const char *, auto & val) { t.randomise(val); return true; }); }
+            [&](const char *, auto val) {
+                t.randomise(inner().*val); return true; }); }
     bool operator<(const what & o) const {
         bool lt = false;
         inner().visit(
-            [&](const char *, auto & val) {
-                intptr_t delta =
-                    reinterpret_cast<intptr_t>(&val) -
-                    reinterpret_cast<intptr_t>(this);
-                typedef decltype(&val) val_t;
-                auto other = reinterpret_cast<val_t>(
-                    reinterpret_cast<intptr_t>(&o) + delta);
-                if (val < *other) {
+            [&](const char *, auto val) {
+                if (inner().*val < o.*val) {
                     lt = true;
                     return false; }
-                else if (*other < val) {
+                else if (o.*val < inner().*val) {
                     lt = false;
                     return false; }
                 else return true; });

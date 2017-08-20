@@ -7,7 +7,7 @@ struct withopers : meta<withopers> {
     structB b;
     withopers(int _a, int _b) : a(_a), b(_b) {}
     template <typename visitor> bool visit(visitor && v) {
-        return v("a", a) && v("b", b); } };
+        return v("a", &withopers::a) && v("b", &withopers::b); } };
 
 void dotest() {
     for (unsigned a = 0; a < 3; a++) {
@@ -57,7 +57,7 @@ struct simplecompare : meta<simplecompare> {
     inlineable a;
     inlineable b;
     template <typename visitor> bool visit(visitor && v) {
-        return v("a", a) && v("b", b); } };
+        return v("a", &simplecompare::a) && v("b", &simplecompare::b); } };
 
 bool docompare(simplecompare &a, simplecompare &b) {
     return a == b; }

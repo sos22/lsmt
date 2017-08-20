@@ -70,8 +70,8 @@ struct testkey : meta<testkey> {
     explicit testkey() : testkey("") {}
 
     template <typename visitor> bool visit(visitor && v) {
-        return v("what", what) &&
-            v("number", number);
+        return v("what", &testkey::what) &&
+            v("number", &testkey::number);
     }
 
 };
@@ -88,12 +88,14 @@ struct threeints : meta<threeints> {
     int c{0};
     explicit threeints(int _a, int _b, int _c) : a(_a), b(_b), c(_c) {}
     template <typename visitor> bool visit(visitor && v) {
-        return v("a", a) && v("b", b), v("c", c); } };
+        return v("a", &threeints::a) &&
+            v("b", &threeints::b) &&
+            v("c", &threeints::c); } };
 
 void testserialise() {
     testkey t{"FOOOO"};
-    t.visit([](char const * name, auto val){
-            printf("name %s, val %s\n", name, mkstr(val).c_str());
+    t.visit([&](char const * name, auto val){
+            printf("name %s, val %s\n", name, mkstr(t.*val).c_str());
             return true; });
     t.number = 0x1234567;
     std::string json(mkjson(t));
