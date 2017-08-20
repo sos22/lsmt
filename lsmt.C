@@ -15,45 +15,10 @@
 
 const char deserialiser::_zeroes[128] = {};
 
-std::string mkjson(std::string const & what) {
-    return "\"" + what + "\""; }
-
 std::string mkjson(int val) {
     char buf[32];
     sprintf(buf, "%d", val);
     return buf; }
-
-void randomiser::randomise(std::string & x) {
-    unsigned l;
-    randomise(l);
-    switch (l % 4) {
-    case 0:
-        x = "";
-        break;
-    case 1: {
-        char c;
-        randomise(c);
-            x.clear();
-            x.append(1, c);
-            break; }
-    case 2: {
-        randomise(l);
-        l %= 10;
-        x.resize(l % 10);
-        randombytes((void *)x.data(), x.size());
-        break; }
-    case 3: {
-        randomise(l);
-        l %= 10;
-        l = 1 << l;
-        int l2;
-        randomise(l2);
-        l2 = l2 % 5 - 2;
-        if (l2 < -l) l2 = 0;
-        l += l2;
-        x.resize(l);
-        randombytes((void *)x.data(), x.size());
-        break; } } }
 
 void randomiser::randombytes(void * ptr, size_t sz) {
     int r = syscall(SYS_getrandom, ptr, sz, 0);
@@ -195,6 +160,40 @@ template <> void nonmetatypes::deserialise(
     ds.deserialise(sz);
     auto buf(ds.getbytes(sz));
     if (buf) str = std::string((char *)buf, sz); }
+template <> void nonmetatypes::randomise(std::string & x, randomiser & r) {
+    unsigned l;
+    r.randomise(l);
+    switch (l % 4) {
+    case 0:
+        x = "";
+        break;
+    case 1: {
+        char c;
+        r.randomise(c);
+            x.clear();
+            x.append(1, c);
+            break; }
+    case 2: {
+        r.randomise(l);
+        l %= 10;
+        x.resize(l % 10);
+        r.randombytes((void *)x.data(), x.size());
+        break; }
+    case 3: {
+        r.randomise(l);
+        l %= 10;
+        l = 1 << l;
+        int l2;
+        r.randomise(l2);
+        l2 = l2 % 5 - 2;
+        if (l2 < -l) l2 = 0;
+        l += l2;
+        x.resize(l);
+        r.randombytes((void *)x.data(), x.size());
+        break; } } }
+template <> std::string nonmetatypes::mkjson(std::string const & what) {
+    return "\"" + what + "\""; }
+
 
 int main() {
     testserialise();

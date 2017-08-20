@@ -8,8 +8,9 @@
 #include <string>
 #include <type_traits>
 
-struct serialiser;
 struct deserialiser;
+struct randomiser;
+struct serialiser;
 
 namespace typestyles {
 struct meta {};
@@ -111,17 +112,36 @@ struct deserialiser {
     void deserialise(int & x) { deserialisefundamental(x); }
     void deserialise(size_t & x) { deserialisefundamental(x); } };
 
-template <typename t> std::string mkjson(t const & what) {
+namespace nonmetatypes {
+template <typename t> std::string mkjson(t const &); }
+template <typename t> std::string mkjson(t const & what,
+                                         typestyles::nonmeta) {
+    return nonmetatypes::mkjson(what); }
+template <typename t> std::string mkjson(t const & what,
+                                         typestyles::meta) {
     return what.json(); }
+template <typename t> std::string mkjson(t const & what) {
+    using sty = decltype(gettypestyle((t ***)nullptr));
+    return mkjson(what, sty()); }
 
-std::string mkjson(std::string const & what);
 std::string mkjson(int val);
+
+namespace nonmetatypes {
+template <typename t> void randomise(t &, randomiser &);
+}
 
 struct randomiser {
     void randombytes(void * ptr, size_t sz);
 
-    template <typename t> void randomise(t & val) { val.randomise(*this); }
-    void randomise(std::string & x);
+    template <typename t> void randomise(t & val) {
+        using sty = decltype(gettypestyle((t ***)nullptr));
+        randomise(val, sty()); }
+
+    template <typename t> void randomise(t & val, typestyles::meta) {
+        val.randomise(*this); }
+    template <typename t> void randomise(t & val, typestyles::nonmeta) {
+        nonmetatypes::randomise(val, *this); }
+
     void randomise(int & x) { randombytes(&x, sizeof(x)); }
     void randomise(unsigned & x) { randombytes(&x, sizeof(x)); }
     void randomise(char & x) { randombytes(&x, sizeof(x)); } };
