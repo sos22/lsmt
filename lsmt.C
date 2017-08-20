@@ -85,12 +85,12 @@ void testserialise() {
 
     for (unsigned x = 0; x < 100000; x++) {
         testkey a;
-        a.randomise(rand);
+        rand.randomise(a);
         serialiser ser;
-        a.serialise(ser);
+        ser.serialise(a);
         deserialiser deser(ser.stage, ser.cursor);
         testkey b;
-        b.deserialise(deser);
+        deser.deserialise(b);
         assert(!deser.failed());
         assert(a == b); } }
 
@@ -106,12 +106,12 @@ bool structB::operator<(structB const & o) const { return v < o.v; }
 void test1() {
     threeints a(1,2,3);
     randomiser rand;
-    a.randomise(rand);
+    rand.randomise(a);
     serialiser ser;
-    a.serialise(ser);
+    ser.serialise(a);
     deserialiser deser(ser.stage, ser.cursor);
     threeints b(5,6,7);
-    b.deserialise(deser);
+    deser.deserialise(b);
     assert(!deser.failed());
     assert(a == b); }
 
