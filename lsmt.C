@@ -152,9 +152,40 @@ void test1() {
     assert(!deser.failed());
     assert(a == b); }
 
+enum class eclass {
+    one = 1,
+    two = 2,
+    three = 3
+};
+typestyles::nonmeta gettypestyle(eclass ***) { return typestyles::nonmeta(); }
+
+template <> void nonmetatypes::serialise(eclass const & ec, serialiser & s) {
+    s.serialise((int)ec); }
+template <> void nonmetatypes::deserialise(eclass & ec, deserialiser & s) {
+    int e;
+    s.deserialise(e);
+    if (e < 1 || e > 3) s.fail();
+    else ec = (eclass)e; }
+
+struct witheclass : meta<witheclass> {
+    eclass inner;
+    template <typename visitor> static bool visit(visitor && v) {
+        return v("inner", &witheclass::inner); } };
+
+void test3() {
+    serialiser ser;
+    witheclass we;
+    we.inner = eclass::two;
+    ser.serialise(we);
+    deserialiser der(ser.stage, ser.cursor);
+    witheclass we2;
+    der.deserialise(we2);
+    assert(we.inner == we2.inner); }
+
 int main() {
     testserialise();
     testoperators();
     dotest();
     test2();
+    test3();
     return 0; }

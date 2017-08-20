@@ -6,11 +6,39 @@
 #include <string.h>
 
 #include <string>
+#include <type_traits>
+
+struct serialiser;
+struct deserialiser;
+
+namespace typestyles {
+struct meta {};
+struct nonmeta {}; }
+
+template <typename t> typestyles::meta gettypestyle(t ***) {
+    return typestyles::meta(); }
+
+namespace nonmetatypes {
+template <typename t> void serialise(t const &, serialiser &);
+}
 
 struct serialiser {
     void * stage {nullptr};
     size_t allocated {0};
     size_t cursor {0};
+
+    // This is the API you want to call; the rest are implementation
+    // details.
+    template <typename t> void serialise(t const & what) {
+        serialise(what, gettypestyle((t ***)nullptr)); }
+
+    template <typename t> void serialise(t const & what,
+                                         typestyles::meta) {
+        what.serialise(*this); }
+
+    template <typename t> void serialise(t const & what,
+                                         typestyles::nonmeta) {
+        nonmetatypes::serialise(what, *this); }
 
     ~serialiser() { free(stage); }
 
@@ -29,9 +57,6 @@ struct serialiser {
     template <typename t> void pushfundamental(t what) {
         pushbytes(&what, sizeof(what)); }
 
-    template <typename t> void serialise(t const & what) {
-        what.serialise(*this); }
-
     void serialise(std::string const & what) {
         pushfundamental<size_t>(what.size());
         pushbytes(what.data(), what.size()); }
@@ -39,12 +64,26 @@ struct serialiser {
     void serialise(int what) { pushfundamental(what); }
     void serialise(size_t x) { pushfundamental(x); } };
 
+namespace nonmetatypes {
+template <typename t> void deserialise(t &, deserialiser &);
+}
 struct deserialiser {
     void const * const buf;
     size_t const size;
     size_t offset{0};
 
+    // These are the API you want to call; the rest are implementation
+    // details.
     bool failed() const { return offset > size; }
+    void fail() { offset = size + 1; }
+    template <typename t> void deserialise(t & val) {
+        deserialise(val, gettypestyle((t ***)nullptr)); }
+
+    template <typename t> void deserialise(t & what, typestyles::meta) {
+        what.deserialise(*this); }
+
+    template <typename t> void deserialise(t & what, typestyles::nonmeta) {
+        nonmetatypes::deserialise(what, *this); }
 
     static const char _zeroes[128];
 
@@ -52,7 +91,7 @@ struct deserialiser {
 
     void const * getbytes(size_t sz) {
         if (offset + sz > size) {
-            offset = size + 1;
+            fail();
             return nullptr; }
         else {
             auto res = reinterpret_cast<void const *>(
@@ -71,7 +110,6 @@ struct deserialiser {
     template <typename t> void deserialisefundamental(t & val) {
         val = *getfundamental<t>(); }
 
-    template <typename t> void deserialise(t & val) { val.deserialise(*this); }
     void deserialise(std::string & val) {
         size_t sz;
         deserialise(sz);
@@ -113,11 +151,17 @@ struct meta {
         if (acc.size() > 1) acc.erase(acc.begin() + acc.size() - 2, acc.end());
         acc.append("}");
         return acc; }
+    struct serialisevisitor {
+        what const & _inner;
+        serialiser & _serialiser;
+        explicit serialisevisitor(what const & inner_, serialiser & serialiser_)
+            : _inner(inner_)
+            , _serialiser(serialiser_) {}
+        template <typename t> bool operator()(const char *, t val) {
+            _serialiser.serialise(_inner.*val);
+            return true; } };
     void serialise(serialiser & t) const {
-        what::visit(
-            [&](const char *, auto val) {
-                t.serialise(inner().*val);
-                return true; }); }
+        what::visit(serialisevisitor(inner(), t)); }
     void deserialise(deserialiser & t) {
         what::visit(
             [&](const char *, auto val) {
