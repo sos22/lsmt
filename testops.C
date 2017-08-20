@@ -52,3 +52,12 @@ void dotest() {
                             assert(x != y);
                             assert(x > y);
                             assert(x >= y); } } } } } } }
+
+struct simplecompare : meta<simplecompare> {
+    inlineable a;
+    inlineable b;
+    template <typename visitor> bool visit(visitor && v) {
+        return v("a", a) && v("b", b); } };
+
+bool docompare(simplecompare &a, simplecompare &b) {
+    return a == b; }

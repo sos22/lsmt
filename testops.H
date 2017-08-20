@@ -14,4 +14,9 @@ struct structB {
 
 void dotest();
 
+struct inlineable {
+    int v;
+    explicit inlineable(int _v) : v(_v) {}
+    bool operator<(inlineable const & o) const { return v < o.v; } };
+
 #endif /* !TESTOPS_H__ */
