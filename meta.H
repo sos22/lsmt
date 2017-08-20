@@ -16,6 +16,7 @@ struct meta {};
 struct nonmeta {}; }
 
 template <typename t> typename t::typestyle gettypestyle(t ***);
+typestyles::nonmeta gettypestyle(std::string ***);
 
 namespace nonmetatypes {
 template <typename t> void serialise(t const &, serialiser &);
@@ -56,10 +57,6 @@ struct serialiser {
 
     template <typename t> void pushfundamental(t what) {
         pushbytes(&what, sizeof(what)); }
-
-    void serialise(std::string const & what) {
-        pushfundamental<size_t>(what.size());
-        pushbytes(what.data(), what.size()); }
 
     void serialise(int what) { pushfundamental(what); }
     void serialise(size_t x) { pushfundamental(x); } };
@@ -111,11 +108,6 @@ struct deserialiser {
     template <typename t> void deserialisefundamental(t & val) {
         val = *getfundamental<t>(); }
 
-    void deserialise(std::string & val) {
-        size_t sz;
-        deserialise(sz);
-        auto buf(getbytes(sz));
-        if (buf) val = std::string((char *)buf, sz); }
     void deserialise(int & x) { deserialisefundamental(x); }
     void deserialise(size_t & x) { deserialisefundamental(x); } };
 
