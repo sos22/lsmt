@@ -15,8 +15,8 @@ namespace typestyles {
 struct meta {};
 struct nonmeta {}; }
 
-template <typename t> typestyles::meta gettypestyle(t ***) {
-    return typestyles::meta(); }
+template <typename t> typename t::typestyle gettypestyle(t ***) {
+    return typename t::typestyle(); }
 
 namespace nonmetatypes {
 template <typename t> void serialise(t const &, serialiser &);
@@ -135,6 +135,9 @@ struct randomiser {
 
 template <typename what>
 struct meta {
+    // Sometimes useful for SFINAE
+    using typestyle = typestyles::meta;
+
     what const & inner() const { return *static_cast<what const *>(this); }
     what & inner() { return *static_cast<what *>(this); }
     std::string json() const {
