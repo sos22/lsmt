@@ -69,7 +69,7 @@ struct testkey : meta<testkey> {
 
     explicit testkey() : testkey("") {}
 
-    template <typename visitor> bool visit(visitor && v) {
+    template <typename visitor> static bool visit(visitor && v) {
         return v("what", &testkey::what) &&
             v("number", &testkey::number);
     }
@@ -87,7 +87,7 @@ struct threeints : meta<threeints> {
     int b{0};
     int c{0};
     explicit threeints(int _a, int _b, int _c) : a(_a), b(_b), c(_c) {}
-    template <typename visitor> bool visit(visitor && v) {
+    template <typename visitor> static bool visit(visitor && v) {
         return v("a", &threeints::a) &&
             v("b", &threeints::b) &&
             v("c", &threeints::c); } };

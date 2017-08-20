@@ -100,7 +100,7 @@ struct meta {
     std::string json() const {
         std::string acc;
         acc.append("{");
-        inner().visit([&](const char * name, auto val) {
+        what::visit([&](const char * name, auto val) {
                 acc.append("\"");
                 acc.append(name);
                 acc.append("\": ");
@@ -112,20 +112,23 @@ struct meta {
         acc.append("}");
         return acc; }
     void serialise(serialiser & t) const {
-        inner().visit(
+        what::visit(
             [&](const char *, auto val) {
-                t.serialise(inner().*val); return true; }); }
+                t.serialise(inner().*val);
+                return true; }); }
     void deserialise(deserialiser & t) {
-        inner().visit(
+        what::visit(
             [&](const char *, auto val) {
-                t.deserialise(inner().*val); return true;});}
+                t.deserialise(inner().*val);
+                return true;});}
     void randomise(randomiser & t) {
-        inner().visit(
+        what::visit(
             [&](const char *, auto val) {
-                t.randomise(inner().*val); return true; }); }
+                t.randomise(inner().*val);
+                return true; }); }
     bool operator<(const what & o) const {
         bool lt = false;
-        inner().visit(
+        what::visit(
             [&](const char *, auto val) {
                 if (inner().*val < o.*val) {
                     lt = true;
