@@ -14,9 +14,18 @@ struct serialiser;
 
 namespace typestyles {
 struct meta {};
-struct nonmeta {}; }
+struct nonmeta {};
+struct fundamental {}; }
 
 template <typename t> typename t::typestyle gettypestyle(t ***);
+typestyles::fundamental gettypestyle(char ***);
+typestyles::fundamental gettypestyle(unsigned char ***);
+typestyles::fundamental gettypestyle(short ***);
+typestyles::fundamental gettypestyle(unsigned short ***);
+typestyles::fundamental gettypestyle(int ***);
+typestyles::fundamental gettypestyle(unsigned int ***);
+typestyles::fundamental gettypestyle(long ***);
+typestyles::fundamental gettypestyle(unsigned long ***);
 typestyles::nonmeta gettypestyle(std::string ***);
 
 namespace nonmetatypes {
@@ -42,6 +51,10 @@ struct serialiser {
                                          typestyles::nonmeta) {
         nonmetatypes::serialise(what, *this); }
 
+    template <typename t> void serialise(t const & what,
+                                         typestyles::fundamental) {
+        pushbytes(&what, sizeof(what)); }
+
     ~serialiser() { free(stage); }
 
     void pushbytes(void const * what, size_t sz) {
@@ -54,13 +67,7 @@ struct serialiser {
                 reinterpret_cast<uint64_t>(stage) + cursor),
             what,
             sz);
-        cursor += sz; }
-
-    template <typename t> void pushfundamental(t what) {
-        pushbytes(&what, sizeof(what)); }
-
-    void serialise(int what) { pushfundamental(what); }
-    void serialise(size_t x) { pushfundamental(x); } };
+        cursor += sz; } };
 
 namespace nonmetatypes {
 template <typename t> void deserialise(t &, deserialiser &);
@@ -84,7 +91,10 @@ struct deserialiser {
     template <typename t> void deserialise(t & what, typestyles::nonmeta) {
         nonmetatypes::deserialise(what, *this); }
 
-    static const char _zeroes[128];
+    template <typename t> void deserialise(t & what, typestyles::fundamental) {
+        auto bytes(getbytes(sizeof(what)));
+        if (bytes) *&what = *static_cast<t const *>(bytes);
+        else what = 0; }
 
     deserialiser(void const * _buf, size_t _size) : buf(_buf), size(_size) {}
 
@@ -96,27 +106,18 @@ struct deserialiser {
             auto res = reinterpret_cast<void const *>(
                 reinterpret_cast<uintptr_t>(buf) + offset);
             offset += sz;
-            return res; } }
-    template <typename t> t const * getfundamental() {
-        static_assert(
-            std::is_arithmetic<t>::value,
-            "non-arithmetic types can't use getfundamental");
-        static_assert(sizeof(t) < sizeof(_zeroes), "get too big a type");
-        auto res = getbytes(sizeof(t));
-        if (!res) res = _zeroes;
-        return static_cast<t const *>(res); }
-
-    template <typename t> void deserialisefundamental(t & val) {
-        val = *getfundamental<t>(); }
-
-    void deserialise(int & x) { deserialisefundamental(x); }
-    void deserialise(size_t & x) { deserialisefundamental(x); } };
+            return res; } } };
 
 namespace nonmetatypes {
 template <typename t> std::string mkjson(t const &); }
+namespace fundamentaltypes {
+std::string mkjson(int); }
 template <typename t> std::string mkjson(t const & what,
                                          typestyles::nonmeta) {
     return nonmetatypes::mkjson(what); }
+template <typename t> std::string mkjson(t const & what,
+                                         typestyles::fundamental) {
+    return fundamentaltypes::mkjson(what); }
 template <typename t> std::string mkjson(t const & what,
                                          typestyles::meta) {
     return what.json(); }
@@ -124,12 +125,8 @@ template <typename t> std::string mkjson(t const & what) {
     using sty = decltype(gettypestyle((t ***)nullptr));
     return mkjson(what, sty()); }
 
-std::string mkjson(int val);
-
 namespace nonmetatypes {
-template <typename t> void randomise(t &, randomiser &);
-}
-
+template <typename t> void randomise(t &, randomiser &); }
 struct randomiser {
     void randombytes(void * ptr, size_t sz);
 
@@ -141,10 +138,8 @@ struct randomiser {
         val.randomise(*this); }
     template <typename t> void randomise(t & val, typestyles::nonmeta) {
         nonmetatypes::randomise(val, *this); }
-
-    void randomise(int & x) { randombytes(&x, sizeof(x)); }
-    void randomise(unsigned & x) { randombytes(&x, sizeof(x)); }
-    void randomise(char & x) { randombytes(&x, sizeof(x)); } };
+    template <typename t> void randomise(t & val, typestyles::fundamental) {
+        randombytes(&val, sizeof(val)); } };
 
 template <typename what>
 struct meta {

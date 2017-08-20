@@ -13,9 +13,7 @@
 
 #include "testops.H"
 
-const char deserialiser::_zeroes[128] = {};
-
-std::string mkjson(int val) {
+std::string fundamentaltypes::mkjson(int val) {
     char buf[32];
     sprintf(buf, "%d", val);
     return buf; }
