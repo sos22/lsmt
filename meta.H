@@ -15,8 +15,7 @@ namespace typestyles {
 struct meta {};
 struct nonmeta {}; }
 
-template <typename t> typename t::typestyle gettypestyle(t ***) {
-    return typename t::typestyle(); }
+template <typename t> typename t::typestyle gettypestyle(t ***);
 
 namespace nonmetatypes {
 template <typename t> void serialise(t const &, serialiser &);
@@ -30,7 +29,8 @@ struct serialiser {
     // This is the API you want to call; the rest are implementation
     // details.
     template <typename t> void serialise(t const & what) {
-        serialise(what, gettypestyle((t ***)nullptr)); }
+        using sty = decltype(gettypestyle((t ***)nullptr));
+        serialise(what, sty()); }
 
     template <typename t> void serialise(t const & what,
                                          typestyles::meta) {
@@ -77,7 +77,8 @@ struct deserialiser {
     bool failed() const { return offset > size; }
     void fail() { offset = size + 1; }
     template <typename t> void deserialise(t & val) {
-        deserialise(val, gettypestyle((t ***)nullptr)); }
+        using sty = decltype(gettypestyle((t ***)nullptr));
+        deserialise(val, sty()); }
 
     template <typename t> void deserialise(t & what, typestyles::meta) {
         what.deserialise(*this); }

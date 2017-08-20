@@ -157,7 +157,7 @@ enum class eclass {
     two = 2,
     three = 3
 };
-typestyles::nonmeta gettypestyle(eclass ***) { return typestyles::nonmeta(); }
+typestyles::nonmeta gettypestyle(eclass ***);
 
 template <> void nonmetatypes::serialise(eclass const & ec, serialiser & s) {
     s.serialise((int)ec); }
