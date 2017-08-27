@@ -1,12 +1,17 @@
 #include "tests/basic.H"
 
 #include "meta.H"
+#include "order.H"
 
 namespace {
-enum class eclass; }
+enum class eclass;
+struct structA;
+struct structB; }
 
 template <> void nonmetatypes::serialise(eclass const & ec, serialiser & s);
 template <> void nonmetatypes::deserialise(eclass & ec, deserialiser & s);
+template <> order nonmetatypes::compare(structA const &, structA const &);
+template <> order nonmetatypes::compare(structB const &, structB const &);
 
 namespace {
 
@@ -87,17 +92,13 @@ static void testoperators() {
 struct structA {
     int v;
     explicit structA(int _v = 0) : v(_v) {}
-    bool operator<(structA const &) const;
 };
+typestyles::nonmeta gettypestyle(structA ***);
 
 struct structB {
     int v;
-    explicit structB(int _v = 0) : v(_v) {}
-    bool operator<(structB const &) const; };
-
-bool structA::operator<(structA const & o) const { return v < o.v; }
-
-bool structB::operator<(structB const & o) const { return v < o.v; }
+    explicit structB(int _v = 0) : v(_v) {} };
+typestyles::nonmeta gettypestyle(structB ***);
 
 static void test1() {
     threeints a(1,2,3);
@@ -204,6 +205,15 @@ template <> void nonmetatypes::deserialise(eclass & ec, deserialiser & s) {
     s.deserialise(e);
     if (e < 1 || e > 3) s.fail();
     else ec = (eclass)e; }
+
+template <> order nonmetatypes::compare(structA const & a, structA const & b) {
+    if (a.v < b.v) return order::lt;
+    else if (a.v == b.v) return order::eq;
+    else return order::gt; }
+template <> order nonmetatypes::compare(structB const & a, structB const & b) {
+    if (a.v < b.v) return order::lt;
+    else if (a.v == b.v) return order::eq;
+    else return order::gt; }
 
 void basictest() {
     testserialise();

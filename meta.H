@@ -3,6 +3,7 @@
 
 #include <assert.h>
 
+#include "order.H"
 #include "randomise.H"
 #include "serialise.H"
 #include "typestyles.H"
@@ -26,22 +27,6 @@ template <typename t> std::string mkjson(t const & what,
 template <typename t> std::string mkjson(t const & what) {
     using sty = decltype(gettypestyle((t ***)nullptr));
     return mkjson(what, sty()); }
-
-struct order {
-    // Negative -> less than, 0 -> equal, positive -> greater than
-private: int inner;
-public:  explicit order(int _inner) : inner(_inner) { }
-public:  const char * name() const {
-    if (inner < 0) return "LT";
-    else if (inner == 0) return "EQ";
-    else return "GT"; }
-public:  bool operator <(order o) const {
-    if (o.inner < 0) return false;
-    else if (inner < 0) return true;
-    else if (o.inner == 0) return false;
-    else if (inner == 0) return true;
-    else return false; }
-public: operator bool() const { return !!inner; } };
 
 /* Type t can inherit from meta<t> to get some useful operations for free:
  *
@@ -79,6 +64,7 @@ public: using typestyle = typestyles::meta;
     friend struct deserialiser;
     friend struct randomiser;
     friend struct serialiser;
+    friend struct comparer;
 
 private: what const & inner() const { return *static_cast<what const *>(this); }
 private: what & inner() { return *static_cast<what *>(this); }
@@ -96,6 +82,12 @@ private: void randomise(randomiser & t) {
         [&](const char *, auto val) {
             t.randomise(inner().*val);
             return true; }); }
+private: order compare(const what & o) const {
+    order res(order::eq);
+    what::visit([&](const char *, auto val) {
+            res = comparer::compare(inner().*val, o.*val);
+            return !res; });
+    return res; }
 
     // mkjson() is a function template, rather than a class, so friend
     // declaration is tricky. Just make it public instead.
@@ -114,33 +106,15 @@ public:  std::string json() const {
     acc.append("}");
     return acc; }
 
-    // operators pretty much have to be public, or else what's the
-    // point?
-public:  bool operator<(const what & o) const {
-    bool lt = false;
-    what::visit(
-        [&](const char *, auto val) {
-            if (inner().*val < o.*val) {
-                lt = true;
-                return false; }
-            else if (o.*val < inner().*val) {
-                lt = false;
-                return false; }
-            else return true; });
-    return lt; } };
-
-// Assume we already have operator <. Derive some more relational
-// operators.
-template <typename a> bool operator>=(const a & x, const a & y) {
-    return !(x < y); }
-template <typename a> bool operator>(const a & x, const a & y) {
-    return y < x; }
-template <typename a> bool operator<=(const a & x, const a & y) {
-    return !(y < x); }
-
-template <typename a> bool operator==(const a & x, const a & y) {
-    return !(x < y) && !(y < x); }
-template <typename a> bool operator!=(const a & x, const a & y) {
-    return !(x == y); }
+    // Special case for operator==, in case one of the fields has ==
+    // but not ordering. Still need an explicit operator== in @what,
+    // so that it wins over the generic ones in order.H, but at least
+    // this makes it a bit easier to define.
+public:  bool operator==(const what & o) const {
+    bool res{true};
+    what::visit([&](const char *, auto val) {
+            res = inner().*val == o.*val;
+            return res; });
+    return res; } };
 
 #endif /* !META_H__ */

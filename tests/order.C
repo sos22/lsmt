@@ -20,16 +20,16 @@ int main() {
     opers(one)
 #undef one
     cout << "bool\n";
-    for (auto a : {order(-1), order(0), order(1)}) {
-        for (auto b : {order(-1), order(0), order(1)}) {
+    for (auto a : {order::lt, order::eq, order::gt}) {
+        for (auto b : {order::lt, order::eq, order::gt}) {
             cout << a << "\t" << b << "\t";
 #define one(name) cout << (a name b) << "\t";
             opers(one)
 #undef one
-            if (b == order(-1)) cout << (bool)(a);
+            if (b == order::lt) cout << (bool)(a);
             cout << "\n";
         }
     }
-    assert((order(0) ?: order(1)) == order(1));
-    assert((order(-1) ?: order(1)) == order(-1));
+    assert((order::eq ?: order::gt) == order::gt);
+    assert((order::lt ?: order::gt) == order::lt);
     return 0; }

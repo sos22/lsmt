@@ -1,3 +1,5 @@
 *~
 *.o
 lsmt
+tests/compare
+tests/order
