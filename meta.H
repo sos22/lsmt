@@ -27,6 +27,22 @@ template <typename t> std::string mkjson(t const & what) {
     using sty = decltype(gettypestyle((t ***)nullptr));
     return mkjson(what, sty()); }
 
+struct order {
+    // Negative -> less than, 0 -> equal, positive -> greater than
+private: int inner;
+public:  explicit order(int _inner) : inner(_inner) { }
+public:  const char * name() const {
+    if (inner < 0) return "LT";
+    else if (inner == 0) return "EQ";
+    else return "GT"; }
+public:  bool operator <(order o) const {
+    if (o.inner < 0) return false;
+    else if (inner < 0) return true;
+    else if (o.inner == 0) return false;
+    else if (inner == 0) return true;
+    else return false; }
+public: operator bool() const { return !!inner; } };
+
 /* Type t can inherit from meta<t> to get some useful operations for free:
  *
  * -- serialise

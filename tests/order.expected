@@ -1,0 +1,10 @@
+  	  	<	<=	==	!=	>=	>	bool
+LT	LT	0	1	1	0	1	0	1
+LT	EQ	1	1	0	1	0	0	
+LT	GT	1	1	0	1	0	0	
+EQ	LT	0	0	0	1	1	1	0
+EQ	EQ	0	1	1	0	1	0	
+EQ	GT	1	1	0	1	0	0	
+GT	LT	0	0	0	1	1	1	1
+GT	EQ	0	0	0	1	1	1	
+GT	GT	0	1	1	0	1	0	
