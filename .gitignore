@@ -1,5 +1,6 @@
 *~
 *.o
+test.C
 lsmt
 tests/compare
 tests/order

@@ -1,0 +1,105 @@
+#! /usr/bin/env python3
+
+import subprocess
+import time
+
+def time_thing(name, thing, nrsamples=10):
+    results = []
+    for _ in range(nrsamples):
+        start = time.time()
+        thing()
+        end = time.time()
+        results.append(end - start)
+    results.sort()
+    mean = sum(results) / len(results)
+    sd = (sum([(x-mean)**2 for x in results])/len(results))**.5
+    def percentile(perc):
+        idx = len(results) * perc
+        if idx == int(idx):
+            return results[int(idx)]
+        else:
+            return results[int(idx)] * (1 - idx + int(idx)) + \
+                results[int(idx)+1] * (idx - int(idx))
+    print("%40s: mean %f, sd %f(%f), median %f, 10%% %f, 90%% %f" % (
+        name, mean, sd, sd/mean, percentile(.5), percentile(0.1), percentile(0.9)))
+
+def compilefile(filename):
+    subprocess.check_call("clang++ -I. -O3 -std=gnu++1y -g -Wall -c {}".format(filename),
+                          shell=True)
+
+def baseline_no_meta(name, nr_structs, nr_fields):
+    with open("test.C", "w") as w:
+        w.write('#include "meta.H"\n\n')
+        for x in range(nr_structs):
+            w.write("struct struct%d {\n" % x)
+            for y in range(nr_fields):
+                w.write("    int a%d;\n" % y)
+            w.write("};\n")
+    time_thing("%s %d %d" % (name, nr_structs, nr_fields), lambda : compilefile("test.C"))
+
+def unused_meta(name, nr_structs, nr_fields):
+    """Structs have meta<> but nobody uses it."""
+    with open("test.C", "w") as w:
+        w.write('#include "meta.H"\n\n')
+        for x in range(nr_structs):
+            w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
+            for y in range(nr_fields):
+                w.write("    int a%d;\n" % y)
+            w.write("     template <typename t> static bool visit(t && v) {\n")
+            for y in range(nr_fields):
+                if y == 0:
+                    w.write("        return ")
+                else:
+                    w.write("        && ")
+                w.write('v("a%d", &struct%d::a%d)\n' % (y, x, y))
+            w.write("; } };\n")
+    time_thing("%s %d %d" % (name, nr_structs, nr_fields), lambda : compilefile("test.C"))
+
+def gen_serialise(name, nr_structs, nr_fields):
+    """Force instantiation of serialise template."""
+    with open("test.C", "w") as w:
+        w.write('#include "meta.H"\n\n')
+        for x in range(nr_structs):
+            w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
+            for y in range(nr_fields):
+                w.write("    int a%d;\n" % y)
+            w.write("     template <typename t> static bool visit(t && v) {\n")
+            if nr_fields == 0:
+                w.write("return true;")
+            else:
+                for y in range(nr_fields):
+                    if y == 0:
+                        w.write("        return ")
+                    else:
+                        w.write("        && ")
+                    w.write('v("a%d", &struct%d::a%d)\n' % (y, x, y))
+            w.write("; } };\n")
+            w.write("void ser%d(struct%d const & str, serialiser & ser) {\n" % (x, x))
+            w.write("    ser.serialise(str); }")
+    time_thing("%s %d %d" % (name, nr_structs, nr_fields), lambda : compilefile("test.C"))
+
+def manual_serialise(name, nr_structs, nr_fields):
+    """Generate a serialise method manually and explicitly, rather than
+    relying on the template."""
+    with open("test.C", "w") as w:
+        w.write('#include "meta.H"\n\n')
+        for x in range(nr_structs):
+            w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
+            for y in range(nr_fields):
+                w.write("    int a%d;\n" % y)
+            w.write("};\n")
+            w.write("void ser%d(struct%d const & str, serialiser & ser) {\n" % (x, x))
+            for y in range(nr_fields):
+                w.write("ser.pushbytes(&str.a%d, sizeof(str.a%d));\n" % (y, y))
+            w.write("}\n")
+    time_thing("%s %d %d" % (name, nr_structs, nr_fields), lambda : compilefile("test.C"))
+
+def runtest(name, test):
+    for nr_fields in range(0, 20, 5):
+        for nr_structs in [1,10,20,100,500]:
+            test(name, nr_structs, nr_fields)
+
+runtest("base", baseline_no_meta)
+runtest("unused", unused_meta)
+runtest("serialise", gen_serialise)
+runtest("manual", manual_serialise)
