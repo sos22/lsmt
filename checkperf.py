@@ -24,7 +24,7 @@ def time_thing(name, thing, nrsamples=10):
         name, mean, sd, sd/mean, percentile(.5), percentile(0.1), percentile(0.9)))
 
 def compilefile(filename):
-    subprocess.check_call("clang++ -I. -O3 -std=gnu++1y -g -Wall -c {}".format(filename),
+    subprocess.check_call("clang++ -I. -O0 -std=gnu++1y -g -Wall -c {}".format(filename),
                           shell=True)
 
 def baseline_no_meta(name, nr_structs, nr_fields):
@@ -94,12 +94,29 @@ def manual_serialise(name, nr_structs, nr_fields):
             w.write("}\n")
     time_thing("%s %d %d" % (name, nr_structs, nr_fields), lambda : compilefile("test.C"))
 
+def semi_manual_serialise(name, nr_structs, nr_fields):
+    """Manually unrole top level of serialise template."""
+    with open("test.C", "w") as w:
+        w.write("#define private public\n")
+        w.write('#include "meta.H"\n\n')
+        for x in range(nr_structs):
+            w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
+            for y in range(nr_fields):
+                w.write("    int a%d;\n" % y)
+            w.write("};\n")
+            w.write("void ser%d(struct%d const & str, serialiser & ser) {\n" % (x, x))
+            for y in range(nr_fields):
+                w.write("ser.serialise(str.a%d);" % y)
+            w.write("}\n")
+    time_thing("%s %d %d" % (name, nr_structs, nr_fields), lambda : compilefile("test.C"))
+
 def runtest(name, test):
-    for nr_fields in range(0, 20, 5):
-        for nr_structs in [1,10,20,100,500]:
+    for nr_fields in [15]:
+        for nr_structs in [500]:
             test(name, nr_structs, nr_fields)
 
+runtest("semi_manual", semi_manual_serialise)
+runtest("manual", manual_serialise)
+runtest("serialise", gen_serialise)
 runtest("base", baseline_no_meta)
 runtest("unused", unused_meta)
-runtest("serialise", gen_serialise)
-runtest("manual", manual_serialise)
