@@ -70,12 +70,12 @@ public: using typestyle = typestyles::meta;
 private: what const & inner() const { return *static_cast<what const *>(this); }
 private: what & inner() { return *static_cast<what *>(this); }
 private: void serialise(serialiser & t) const {
-    what::visit([&](const char *, auto val) {
-            t.serialise(inner().*val);
+    what::visit(&inner(), [&](what const * i,const char *, auto val) {
+            t.serialise(i->*val);
             return true; }); }
 private: void deserialise(deserialiser & t) {
-    what::visit(
-        [&](const char *, auto val) {
+    what::visit(&inner(),
+        [&](what const *, const char *, auto val) {
             t.deserialise(inner().*val);
             return true; });}
 private: void randomise(randomiser & t) {

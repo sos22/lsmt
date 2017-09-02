@@ -19,17 +19,17 @@ struct smallstruct : meta<smallstruct> {
     unsigned h{0};
     unsigned i{0};
     unsigned j{0};
-    template <typename v_t> static void visit(v_t && v) {
-        v("a", &smallstruct::a) &&
-            v("b", &smallstruct::b) &&
-            v("c", &smallstruct::c) &&
-            v("d", &smallstruct::d) &&
-            v("e", &smallstruct::e) &&
-            v("f", &smallstruct::f) &&
-            v("g", &smallstruct::g) &&
-            v("h", &smallstruct::h) &&
-            v("i", &smallstruct::i) &&
-            v("j", &smallstruct::j); }
+    template <typename v_t, typename c_t> static void visit(c_t c, v_t && v) {
+        v(c, "a", &smallstruct::a) &&
+            v(c, "b", &smallstruct::b) &&
+            v(c, "c", &smallstruct::c) &&
+            v(c, "d", &smallstruct::d) &&
+            v(c, "e", &smallstruct::e) &&
+            v(c, "f", &smallstruct::f) &&
+            v(c, "g", &smallstruct::g) &&
+            v(c, "h", &smallstruct::h) &&
+            v(c, "i", &smallstruct::i) &&
+            v(c, "j", &smallstruct::j); }
     void manualserialise(serialiser & s) {
         s.pushbytes(&a, sizeof(a));
         s.pushbytes(&b, sizeof(b));
