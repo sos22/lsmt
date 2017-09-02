@@ -88,7 +88,8 @@ int main() {
             deserialiser d(s.stage, s.cursor);
             for (unsigned x = 0; x < NRITERS; x++) {
                 smallstruct s;
-                d.deserialise(s); }
+                d.deserialise(s);
+                dosomething(&s); }
             double end_der = now();
             meta_ser.sample(end_ser - start_ser);
             meta_deser.sample(end_der - end_ser);

@@ -83,9 +83,15 @@ private: void serialise(serialiser & t) const {
             s.j->serialise(s.i->*val);
             return true; }); }
 private: void deserialise(deserialiser & t) {
-    what::visit(&inner(),
-        [&](what const *, const char *, auto val) {
-            t.deserialise(inner().*val);
+    struct _state {
+        what * i;
+        deserialiser * j;
+    } state;
+    state.i = &inner();
+    state.j = &t;
+    what::visit(state,
+        [&](_state const & s, const char *, auto val) {
+            s.j->deserialise(s.i->*val);
             return true; });}
 private: void randomise(randomiser & t) {
     what::visit(nullptr,
