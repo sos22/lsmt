@@ -19,7 +19,7 @@ struct smallstruct : meta<smallstruct> {
     unsigned h{0};
     unsigned i{0};
     unsigned j{0};
-    template <typename v_t, typename c_t> static void visit(c_t c, v_t && v) {
+    template <typename c_t, typename v_t> static void visit(c_t c, v_t && v) {
         v(c, "a", &smallstruct::a) &&
             v(c, "b", &smallstruct::b) &&
             v(c, "c", &smallstruct::c) &&

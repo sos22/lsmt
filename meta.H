@@ -43,16 +43,19 @@ template <typename t> std::string mkjson(t const & what) {
  *    int field1;
  *    std::string field2;
  *    some_other_type field3;
- *    template <typename visitor> static void visit(visitor && v) {
- *       v("field1", &foo::field1) &&
- *              v("field2", &foo::field2) &&
- *              v("field3", &foo::field3); } };
+ *    template <typename state, typename visitor>
+ *    static void visit(state c, visitor && v) {
+ *       v(c, "field1", &foo::field1) &&
+ *              v(c, "field2", &foo::field2) &&
+ *              v(c, "field3", &foo::field3); } };
  *
  * The visitor should be called once for each field, giving it a
  * string description of the field (mostly useful for json) and a
  * pointer-to-member to the field. The visitor returns a bool, which
  * is either true to keep going or false to stop early. visit() itself
- * returns void. */
+ * returns void. The state parameter to visit() is kind of redundant,
+ * because a lambda capture could do the same thing, but making it
+ * explicit seems to help the compiler do useful optimisations. */
 template <typename what>
 struct meta {
     // Tag so that gettypestyle can easily recognise meta<> classes,
@@ -70,8 +73,14 @@ public: using typestyle = typestyles::meta;
 private: what const & inner() const { return *static_cast<what const *>(this); }
 private: what & inner() { return *static_cast<what *>(this); }
 private: void serialise(serialiser & t) const {
-    what::visit(&inner(), [&](what const * i,const char *, auto val) {
-            t.serialise(i->*val);
+    struct _state {
+        what const * i;
+        serialiser * j;
+    } state;
+    state.i = &inner();
+    state.j = &t;
+    what::visit(state, [](_state const & s,const char *, auto val) {
+            s.j->serialise(s.i->*val);
             return true; }); }
 private: void deserialise(deserialiser & t) {
     what::visit(&inner(),
@@ -79,13 +88,13 @@ private: void deserialise(deserialiser & t) {
             t.deserialise(inner().*val);
             return true; });}
 private: void randomise(randomiser & t) {
-    what::visit(
-        [&](const char *, auto val) {
+    what::visit(nullptr,
+        [&](void *, const char *, auto val) {
             t.randomise(inner().*val);
             return true; }); }
 private: order compare(const what & o) const {
     order res(order::eq);
-    what::visit([&](const char *, auto val) {
+    what::visit(nullptr, [&](void *, const char *, auto val) {
             res = comparer::compare(inner().*val, o.*val);
             return !res; });
     return res; }
@@ -95,7 +104,7 @@ private: order compare(const what & o) const {
 public:  std::string json() const {
     std::string acc;
     acc.append("{");
-    what::visit([&](const char * name, auto val) {
+    what::visit(nullptr, [&](void *, const char * name, auto val) {
             acc.append("\"");
             acc.append(name);
             acc.append("\": ");
@@ -113,7 +122,7 @@ public:  std::string json() const {
     // this makes it a bit easier to define.
 public:  bool operator==(const what & o) const {
     bool res{true};
-    what::visit([&](const char *, auto val) {
+    what::visit(nullptr, [&](void *, const char *, auto val) {
             res = inner().*val == o.*val;
             return res; });
     return res; } };

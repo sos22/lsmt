@@ -14,9 +14,9 @@ struct meta_eq : meta<meta_eq> {
     eq_only b;
     meta_eq(int _a, eq_only _b) : a(_a), b(_b) {}
     meta_eq(int _a, int _b) : a(_a), b(_b) {}
-    template <typename t> static bool visit(t && v) {
-        return v("a", &meta_eq::a) &&
-            v("b", &meta_eq::b); }
+    template <typename state, typename t> static void visit(state s, t && v) {
+        v(s, "a", &meta_eq::a) &&
+            v(s, "b", &meta_eq::b); }
     bool operator==(const meta_eq &o) const {
         return *static_cast<const meta<meta_eq> *>(this) == o; }
 };

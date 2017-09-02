@@ -31,23 +31,25 @@ struct testkey : meta<testkey> {
 
     explicit testkey() : testkey("") {}
 
-    template <typename visitor> static void visit(visitor && v) {
-        v("what", &testkey::what) &&
-            v("number", &testkey::number); } };
+    template <typename state, typename visitor>
+    static void visit(state s, visitor && v) {
+        v(s, "what", &testkey::what) &&
+            v(s, "number", &testkey::number); } };
 
 struct threeints : meta<threeints> {
     int a{0};
     int b{0};
     int c{0};
     explicit threeints(int _a, int _b, int _c) : a(_a), b(_b), c(_c) {}
-    template <typename visitor> static void visit(visitor && v) {
-        v("a", &threeints::a) &&
-            v("b", &threeints::b) &&
-            v("c", &threeints::c); } };
+    template <typename state, typename visitor>
+    static void visit(state s, visitor && v) {
+        v(s, "a", &threeints::a) &&
+            v(s, "b", &threeints::b) &&
+            v(s, "c", &threeints::c); } };
 
 static void testserialise() {
     testkey t{"FOOOO"};
-    t.visit([&](char const * name, auto val){
+    t.visit(nullptr, [&](void *, char const * name, auto val){
             printf("name %s, val %s\n", name, mkstr(t.*val).c_str());
             return true; });
     t.number = 0x1234567;
@@ -116,8 +118,9 @@ struct withopers : meta<withopers> {
     structA a;
     structB b;
     withopers(int _a, int _b) : a(_a), b(_b) {}
-    template <typename visitor> static void visit(visitor && v) {
-        v("a", &withopers::a) && v("b", &withopers::b); } };
+    template <typename state, typename visitor>
+    static void visit(state s, visitor && v) {
+        v(s, "a", &withopers::a) && v(s, "b", &withopers::b); } };
 
 static void dotest() {
     for (unsigned a = 0; a < 3; a++) {
@@ -185,8 +188,9 @@ typestyles::nonmeta gettypestyle(eclass ***);
 
 struct witheclass : meta<witheclass> {
     eclass inner;
-    template <typename visitor> static void visit(visitor && v) {
-        v("inner", &witheclass::inner); } };
+    template <typename state, typename visitor>
+    static void visit(state s, visitor && v) {
+        v(s, "inner", &witheclass::inner); } };
 
 static void test3() {
     serialiser ser;
