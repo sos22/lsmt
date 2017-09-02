@@ -31,8 +31,8 @@ struct testkey : meta<testkey> {
 
     explicit testkey() : testkey("") {}
 
-    template <typename visitor> static bool visit(visitor && v) {
-        return v("what", &testkey::what) &&
+    template <typename visitor> static void visit(visitor && v) {
+        v("what", &testkey::what) &&
             v("number", &testkey::number); } };
 
 struct threeints : meta<threeints> {
@@ -40,8 +40,8 @@ struct threeints : meta<threeints> {
     int b{0};
     int c{0};
     explicit threeints(int _a, int _b, int _c) : a(_a), b(_b), c(_c) {}
-    template <typename visitor> static bool visit(visitor && v) {
-        return v("a", &threeints::a) &&
+    template <typename visitor> static void visit(visitor && v) {
+        v("a", &threeints::a) &&
             v("b", &threeints::b) &&
             v("c", &threeints::c); } };
 
@@ -116,8 +116,8 @@ struct withopers : meta<withopers> {
     structA a;
     structB b;
     withopers(int _a, int _b) : a(_a), b(_b) {}
-    template <typename visitor> static bool visit(visitor && v) {
-        return v("a", &withopers::a) && v("b", &withopers::b); } };
+    template <typename visitor> static void visit(visitor && v) {
+        v("a", &withopers::a) && v("b", &withopers::b); } };
 
 static void dotest() {
     for (unsigned a = 0; a < 3; a++) {
@@ -171,8 +171,8 @@ struct inlineable {
 struct simplecompare : meta<simplecompare> {
     inlineable a;
     inlineable b;
-    template <typename visitor> static bool visit(visitor && v) {
-        return v("a", &simplecompare::a) && v("b", &simplecompare::b); } };
+    template <typename visitor> static void visit(visitor && v) {
+        v("a", &simplecompare::a) && v("b", &simplecompare::b); } };
 
 static void test2() { test1(); }
 
@@ -185,8 +185,8 @@ typestyles::nonmeta gettypestyle(eclass ***);
 
 struct witheclass : meta<witheclass> {
     eclass inner;
-    template <typename visitor> static bool visit(visitor && v) {
-        return v("inner", &witheclass::inner); } };
+    template <typename visitor> static void visit(visitor && v) {
+        v("inner", &witheclass::inner); } };
 
 static void test3() {
     serialiser ser;

@@ -43,15 +43,16 @@ template <typename t> std::string mkjson(t const & what) {
  *    int field1;
  *    std::string field2;
  *    some_other_type field3;
- *    template <typename visitor> static bool visit(visitor && v) {
- *       return v("field1", &foo::field1) &&
+ *    template <typename visitor> static void visit(visitor && v) {
+ *       v("field1", &foo::field1) &&
  *              v("field2", &foo::field2) &&
  *              v("field3", &foo::field3); } };
  *
  * The visitor should be called once for each field, giving it a
  * string description of the field (mostly useful for json) and a
  * pointer-to-member to the field. The visitor returns a bool, which
- * is either true to keep going or false to stop early. */
+ * is either true to keep going or false to stop early. visit() itself
+ * returns void. */
 template <typename what>
 struct meta {
     // Tag so that gettypestyle can easily recognise meta<> classes,

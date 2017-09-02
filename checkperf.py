@@ -24,7 +24,7 @@ def time_thing(name, thing, nrsamples=10):
         name, mean, sd, sd/mean, percentile(.5), percentile(0.1), percentile(0.9)))
 
 def compilefile(filename):
-    subprocess.check_call("clang++ -I. -O0 -std=gnu++1y -g -Wall -c {}".format(filename),
+    subprocess.check_call("clang++ -I. -O3 -std=gnu++1y -g -Wall -c {}".format(filename),
                           shell=True)
 
 def baseline_no_meta(name, nr_structs, nr_fields):
@@ -45,10 +45,10 @@ def unused_meta(name, nr_structs, nr_fields):
             w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
             for y in range(nr_fields):
                 w.write("    int a%d;\n" % y)
-            w.write("     template <typename t> static bool visit(t && v) {\n")
+            w.write("     template <typename t> static void visit(t && v) {\n")
             for y in range(nr_fields):
                 if y == 0:
-                    w.write("        return ")
+                    w.write("        ")
                 else:
                     w.write("        && ")
                 w.write('v("a%d", &struct%d::a%d)\n' % (y, x, y))
@@ -63,13 +63,13 @@ def gen_serialise(name, nr_structs, nr_fields):
             w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
             for y in range(nr_fields):
                 w.write("    int a%d;\n" % y)
-            w.write("     template <typename t> static bool visit(t && v) {\n")
+            w.write("     template <typename t> static void visit(t && v) {\n")
             if nr_fields == 0:
-                w.write("return true;")
+                w.write("true;")
             else:
                 for y in range(nr_fields):
                     if y == 0:
-                        w.write("        return ")
+                        w.write("         ")
                     else:
                         w.write("        && ")
                     w.write('v("a%d", &struct%d::a%d)\n' % (y, x, y))

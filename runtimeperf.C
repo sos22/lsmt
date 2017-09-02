@@ -18,8 +18,8 @@ struct smallstruct : meta<smallstruct> {
     unsigned h{0};
     unsigned i{0};
     unsigned j{0};
-    template <typename v_t> static bool visit(v_t && v) {
-        return v("a", &smallstruct::a) &&
+    template <typename v_t> static void visit(v_t && v) {
+        v("a", &smallstruct::a) &&
             v("b", &smallstruct::b) &&
             v("c", &smallstruct::c) &&
             v("d", &smallstruct::d) &&
