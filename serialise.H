@@ -56,19 +56,21 @@ template <typename t> void deserialise(t &, deserialiser &); }
  * type, even after a deserialisation failure.  If you care, you
  * should almost certainly call failed() when you're done. */
 struct deserialiser {
-private: void const * const buf;
-private: size_t const size;
-    /* Note that offset might be past the limit of size if we're failed. */
-private: size_t offset{0};
+private: uintptr_t const buf_start;
+private: uintptr_t const buf_end;
+    /* Note that buf_next might be past the buf_end if we're failed. */
+private: uintptr_t buf_next{0};
 
 public:  deserialiser(void const * _buf, size_t _size)
-    : buf(_buf), size(_size) {}
+    : buf_start(reinterpret_cast<uintptr_t>(_buf))
+    , buf_end(buf_start + _size)
+    , buf_next(buf_start) { }
 
     /* Has the deserialiser failed? If it has, anything it returned
      * should be treated as suspect. */
-public:  bool failed() const { return offset > size; }
+public:  bool failed() const { return buf_next > buf_end; }
     /* Mark the deserialiser as failed. */
-public:  void fail() { offset = size + 1; }
+public:  void fail() { buf_next = buf_end + 1; }
     /* Deserialise one thing, putting the result into @val and
      * advancing the cursor. */
 public:  template <typename t> void deserialise(t & val) {
@@ -76,13 +78,12 @@ public:  template <typename t> void deserialise(t & val) {
     deserialise(val, sty()); }
     /* Helper for implementing non-meta deserialisers. */
 public:  void const * getbytes(size_t sz) {
-    if (offset + sz > size) {
+    if (buf_next + sz > buf_end) {
         fail();
         return nullptr; }
     else {
-        auto res = reinterpret_cast<void const *>(
-            reinterpret_cast<uintptr_t>(buf) + offset);
-        offset += sz;
+        auto res = reinterpret_cast<void const *>(buf_next);
+        buf_next += sz;
         return res; } }
 
     /* Indirection layer to find the right deserialiser. */
@@ -92,12 +93,11 @@ private: template <typename t> void deserialise(t & what, typestyles::nonmeta) {
     nonmetatypes::deserialise(what, *this); }
 public:  template <typename t> void deserialise(
     t & what, typestyles::fundamental) {
-    if (offset + sizeof(t) > size) {
-        fail();
-        what = 0; }
+    if (buf_next + sizeof(t) > buf_end) {
+        what = 0;
+        fail(); }
     else {
-        what = *reinterpret_cast<t const *>(
-            reinterpret_cast<uintptr_t>(buf) + offset);
-        offset += sizeof(t); } } };
+        what = *reinterpret_cast<t const *>(buf_next);
+        buf_next += sizeof(t); } } };
 
 #endif /* !SERIALISE_H__ */

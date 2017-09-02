@@ -3,6 +3,7 @@
  * again with a manually-written one, and compare the difference. */
 #include <sys/time.h>
 #include <math.h>
+#include <assert.h>
 
 #include "meta.H"
 
@@ -70,6 +71,8 @@ struct stats {
     double sd() const {
         return sqrt(sum2 / nr - mean() * mean()); } };
 
+extern "C" void dosomething(smallstruct *);
+
 int main() {
     stats manual_ser;
     stats manual_deser;
@@ -99,7 +102,8 @@ int main() {
             deserialiser d(s.stage, s.cursor);
             for (unsigned x = 0; x < NRITERS; x++) {
                 smallstruct s;
-                s.manualdeserialise(d); }
+                s.manualdeserialise(d);
+                dosomething(&s); }
             double end_der = now();
             manual_ser.sample(end_ser - start_ser);
             manual_deser.sample(end_der - end_ser);

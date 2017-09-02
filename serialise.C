@@ -29,3 +29,5 @@ template <> void nonmetatypes::deserialise(
     ds.deserialise(sz);
     auto buf(ds.getbytes(sz));
     if (buf) str = std::string((char *)buf, sz); }
+
+extern "C" void dosomething(void *) {}
