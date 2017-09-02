@@ -2,6 +2,7 @@
  * million times using meta-generated serialisers, and then do it
  * again with a manually-written one, and compare the difference. */
 #include <sys/time.h>
+#include <math.h>
 
 #include "meta.H"
 
@@ -57,8 +58,24 @@ static double now() {
     gettimeofday(&tv, NULL);
     return tv.tv_sec + tv.tv_usec * 1e-6; }
 
+struct stats {
+    double sum{0};
+    double sum2{0};
+    unsigned nr{0};
+    void sample(double what) {
+        sum += what;
+        sum2 += what * what;
+        nr++; }
+    double mean() const { return sum / nr; }
+    double sd() const {
+        return sqrt(sum2 / nr - mean() * mean()); } };
+
 int main() {
-    while (true) {
+    stats manual_ser;
+    stats manual_deser;
+    stats meta_ser;
+    stats meta_deser;
+    for (unsigned x = 0; x < 5; x++) {
         // meta-generated serialisers;
         {   serialiser s;
             double start_ser = now();
@@ -70,6 +87,8 @@ int main() {
                 smallstruct s;
                 d.deserialise(s); }
             double end_der = now();
+            meta_ser.sample(end_ser - start_ser);
+            meta_deser.sample(end_der - end_ser);
             printf("Meta: %f %f\n", end_ser - start_ser, end_der - end_ser); }
         // Manually-generated ones.
         {   serialiser s;
@@ -82,5 +101,11 @@ int main() {
                 smallstruct s;
                 s.manualdeserialise(d); }
             double end_der = now();
+            manual_ser.sample(end_ser - start_ser);
+            manual_deser.sample(end_der - end_ser);
             printf("Manual: %f %f\n", end_ser - start_ser, end_der - end_ser);}}
+    printf("meta ser %f+-%f\n", meta_ser.mean(), meta_ser.sd());
+    printf("meta deser %f+-%f\n", meta_deser.mean(), meta_deser.sd());
+    printf("manual ser %f+-%f\n", manual_ser.mean(), manual_ser.sd());
+    printf("manual deser %f+-%f\n", manual_deser.mean(), manual_deser.sd());
     return 0; }

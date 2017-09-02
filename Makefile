@@ -10,7 +10,7 @@ lsmt: meta.H $(objects)
 	clang++ -std=gnu++1y -Wall -g $(objects) -o $@
 
 runtimeperf: meta.H serialise.o runtimeperf.o
-	clang++ -std=gnu++1y -Wall -g serialise.o runtimeperf.o -o $@
+	clang++ -lm -std=gnu++1y -Wall -g serialise.o runtimeperf.o -o $@
 
 tests/order: tests/order.C order.o *.H
 	clang++ -I. -O3 -std=gnu++1y -Wall -g $< order.o -o $@
