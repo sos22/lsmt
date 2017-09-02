@@ -24,7 +24,7 @@ def time_thing(name, thing, nrsamples=10):
         name, mean, sd, sd/mean, percentile(.5), percentile(0.1), percentile(0.9)))
 
 def compilefile(filename):
-    subprocess.check_call("clang++ -I. -O3 -std=gnu++1y -g -Wall -c {}".format(filename),
+    subprocess.check_call("clang++ -I. -O0 -std=gnu++1y -g -Wall -c {}".format(filename),
                           shell=True)
 
 def baseline_no_meta(name, nr_structs, nr_fields):
@@ -45,13 +45,13 @@ def unused_meta(name, nr_structs, nr_fields):
             w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
             for y in range(nr_fields):
                 w.write("    int a%d;\n" % y)
-            w.write("     template <typename t> static void visit(t && v) {\n")
+            w.write("     template <typename c, typename t> static void visit(c cc, t && v) {\n")
             for y in range(nr_fields):
                 if y == 0:
                     w.write("        ")
                 else:
                     w.write("        && ")
-                w.write('v("a%d", &struct%d::a%d)\n' % (y, x, y))
+                w.write('v(cc, "a%d", &struct%d::a%d)\n' % (y, x, y))
             w.write("; } };\n")
     time_thing("%s %d %d" % (name, nr_structs, nr_fields), lambda : compilefile("test.C"))
 
@@ -63,7 +63,7 @@ def gen_serialise(name, nr_structs, nr_fields):
             w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
             for y in range(nr_fields):
                 w.write("    int a%d;\n" % y)
-            w.write("     template <typename t> static void visit(t && v) {\n")
+            w.write("     template <typename c, typename t> static void visit(c cc, t && v) {\n")
             if nr_fields == 0:
                 w.write("true;")
             else:
@@ -72,7 +72,7 @@ def gen_serialise(name, nr_structs, nr_fields):
                         w.write("         ")
                     else:
                         w.write("        && ")
-                    w.write('v("a%d", &struct%d::a%d)\n' % (y, x, y))
+                    w.write('v(cc, "a%d", &struct%d::a%d)\n' % (y, x, y))
             w.write("; } };\n")
             w.write("void ser%d(struct%d const & str, serialiser & ser) {\n" % (x, x))
             w.write("    ser.serialise(str); }")
