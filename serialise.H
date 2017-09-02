@@ -90,7 +90,7 @@ private: template <typename t> void deserialise(t & what, typestyles::meta) {
     what.deserialise(*this); }
 private: template <typename t> void deserialise(t & what, typestyles::nonmeta) {
     nonmetatypes::deserialise(what, *this); }
-private:  template <typename t> void deserialise(
+public:  template <typename t> void deserialise(
     t & what, typestyles::fundamental) {
     auto bytes(getbytes(sizeof(what)));
     if (bytes) *&what = *static_cast<t const *>(bytes);
