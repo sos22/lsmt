@@ -92,8 +92,12 @@ private: template <typename t> void deserialise(t & what, typestyles::nonmeta) {
     nonmetatypes::deserialise(what, *this); }
 public:  template <typename t> void deserialise(
     t & what, typestyles::fundamental) {
-    auto bytes(getbytes(sizeof(what)));
-    if (bytes) *&what = *static_cast<t const *>(bytes);
-    else what = 0; } };
+    if (offset + sizeof(t) > size) {
+        fail();
+        what = 0; }
+    else {
+        what = *reinterpret_cast<t const *>(
+            reinterpret_cast<uintptr_t>(buf) + offset);
+        offset += sizeof(t); } } };
 
 #endif /* !SERIALISE_H__ */
