@@ -2,5 +2,7 @@
 *.o
 test.C
 lsmt
+runtimeperf
 tests/compare
 tests/order
+tests/split

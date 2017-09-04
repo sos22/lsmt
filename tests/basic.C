@@ -1,7 +1,10 @@
 #include "tests/basic.H"
 
+#include <assert.h>
+
 #include "meta.H"
 #include "order.H"
+#include "serialise.H"
 
 namespace {
 enum class eclass;

@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include "meta.H"
+#include "serialise.H"
 
 #define NRITERS 10000000
 
