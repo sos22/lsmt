@@ -58,19 +58,19 @@ static void testserialise() {
     t.number = 0x1234567;
     std::string json(mkjson(t));
     printf("jsonised %s\n", json.c_str());
-    serialiser ser;
-    ser.serialise(t);
-    printf("ser buffer size %lx, contents %lx %lx\n",
-           ser.cursor,
-           ((unsigned long *)ser.stage)[0],
-           ((unsigned long *)ser.stage)[1]);
+    {   serialiser ser;
+        ser.serialise(t);
+        printf("ser buffer size %lx, contents %lx %lx\n",
+               ser.cursor,
+               ((unsigned long *)ser.stage)[0],
+               ((unsigned long *)ser.stage)[1]);
 
-    deserialiser deser(ser.stage, ser.cursor);
-    testkey t2;
-    deser.deserialise(t2);
+        deserialiser deser(ser.stage, ser.cursor);
+        testkey t2;
+        deser.deserialise(t2);
 
-    std::string json2(mkjson(t2));
-    printf("jsonised %s\n", json2.c_str());
+        std::string json2(mkjson(t2));
+        printf("jsonised %s\n", json2.c_str()); }
 
     randomiser rand;
     testkey t3;
