@@ -83,14 +83,14 @@ int main() {
         // meta-generated serialisers;
         {   serialiser s;
             double start_ser = now();
-            for (unsigned x = 0; x < NRITERS; x++) {
+            for (unsigned y = 0; y < NRITERS; y++) {
                 s.serialise(smallstruct()); }
             double end_ser = now();
             deserialiser d(s.stage, s.cursor);
-            for (unsigned x = 0; x < NRITERS; x++) {
-                smallstruct s;
-                d.deserialise(s);
-                dosomething(&s); }
+            for (unsigned y = 0; y < NRITERS; y++) {
+                smallstruct ss;
+                d.deserialise(ss);
+                dosomething(&ss); }
             double end_der = now();
             meta_ser.sample(end_ser - start_ser);
             meta_deser.sample(end_der - end_ser);
@@ -98,14 +98,14 @@ int main() {
         // Manually-generated ones.
         {   serialiser s;
             double start_ser = now();
-            for (unsigned x = 0; x < NRITERS; x++) {
+            for (unsigned y = 0; y < NRITERS; y++) {
                 smallstruct().manualserialise(s); }
             double end_ser = now();
             deserialiser d(s.stage, s.cursor);
-            for (unsigned x = 0; x < NRITERS; x++) {
-                smallstruct s;
-                s.manualdeserialise(d);
-                dosomething(&s); }
+            for (unsigned y = 0; y < NRITERS; y++) {
+                smallstruct ss;
+                ss.manualdeserialise(d);
+                dosomething(&ss); }
             double end_der = now();
             manual_ser.sample(end_ser - start_ser);
             manual_deser.sample(end_der - end_ser);
