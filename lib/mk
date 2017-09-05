@@ -1,0 +1,6 @@
+lib_srcs = lib/randomise.C lib/serialise.C lib/order.C lib/json.C
+
+srcs += $(lib_srcs)
+
+lib.a: $(lib_srcs:.C=.o)
+	rm -f $@ ; ar rcD $@ $^
