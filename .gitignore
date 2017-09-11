@@ -3,8 +3,8 @@
 *.o
 *.d
 test.C
-lsmt
 runtimeperf
 tests/compare
 tests/order
+tests/smoke
 tests/split

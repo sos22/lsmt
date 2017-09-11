@@ -1,6 +1,6 @@
 #include "meta.H"
 
-#include "tests/basic.H"
+#include "basic.H"
 
 int main() {
     basictest();

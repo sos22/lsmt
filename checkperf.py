@@ -24,7 +24,7 @@ def time_thing(name, thing, nrsamples=10):
         name, mean, sd, sd/mean, percentile(.5), percentile(0.1), percentile(0.9)))
 
 def compilefile(filename):
-    subprocess.check_call("clang++ -I. -O0 -std=gnu++1y -g -Wall -c {}".format(filename),
+    subprocess.check_call("clang++ -Iinclude -O0 -std=gnu++1y -g -Wall -c {}".format(filename),
                           shell=True)
 
 def baseline_no_meta(name, nr_structs, nr_fields):
@@ -41,6 +41,7 @@ def unused_meta(name, nr_structs, nr_fields):
     """Structs have meta<> but nobody uses it."""
     with open("test.C", "w") as w:
         w.write('#include "meta.H"\n\n')
+        w.write('#include "serialise.H"\n\n')
         for x in range(nr_structs):
             w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
             for y in range(nr_fields):
@@ -59,6 +60,7 @@ def gen_serialise(name, nr_structs, nr_fields):
     """Force instantiation of serialise template."""
     with open("test.C", "w") as w:
         w.write('#include "meta.H"\n\n')
+        w.write('#include "serialise.H"\n\n')
         for x in range(nr_structs):
             w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
             for y in range(nr_fields):
@@ -83,6 +85,7 @@ def manual_serialise(name, nr_structs, nr_fields):
     relying on the template."""
     with open("test.C", "w") as w:
         w.write('#include "meta.H"\n\n')
+        w.write('#include "serialise.H"\n\n')
         for x in range(nr_structs):
             w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
             for y in range(nr_fields):
@@ -99,6 +102,7 @@ def semi_manual_serialise(name, nr_structs, nr_fields):
     with open("test.C", "w") as w:
         w.write("#define private public\n")
         w.write('#include "meta.H"\n\n')
+        w.write('#include "serialise.H"\n')
         for x in range(nr_structs):
             w.write("struct struct%d : meta<struct%d> {\n" % (x, x))
             for y in range(nr_fields):

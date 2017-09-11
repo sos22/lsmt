@@ -1,7 +1,7 @@
 deps = $(srcs:.C=.d)
 
 CXX=clang++
-CXXFLAGS=-std=gnu++1y -fno-strict-aliasing -fno-operator-names -fno-exceptions -g -O3 -I.
+CXXFLAGS=-std=gnu++1y -fno-strict-aliasing -fno-operator-names -fno-exceptions -g -O3 -Iinclude
 
 # Warnings:
 CXXFLAGS += -Wall -Werror -Wextra -Wshadow -Winit-self -Wswitch-enum 
@@ -11,7 +11,7 @@ CXXFLAGS += -Wall -Werror -Wextra -Wshadow -Winit-self -Wswitch-enum
 # -Werror on. Turn it off.
 CXXFLAGS += -Wno-unneeded-internal-declaration
 
-all: lsmt runtimeperf runtests
+all: runtimeperf runtests
 
 %.d: %.C
 	$(CXX) $(CXXFLAGS) -MM -MT "$@ $(@:.d=.o)" -o $(@:.d=.o) -c -MF $@.tmp $< && mv $@.tmp $@
@@ -20,12 +20,13 @@ all: lsmt runtimeperf runtests
 
 include lib/mk
 
-runtests: tests/compare tests/split
+.PHONY: runtests
+runtests: tests/compare tests/split tests/smoke
 	./tests/testorder.sh
 	./tests/compare
 	./tests/split
 
-lsmt: lsmt.o tests/basic.o lib.a
+tests/smoke: tests/smoke.o tests/basic.o lib.a
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 runtimeperf: lib.a runtimeperf.o
