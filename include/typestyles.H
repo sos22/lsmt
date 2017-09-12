@@ -17,5 +17,6 @@ typestyles::fundamental gettypestyle(unsigned int ***);
 typestyles::fundamental gettypestyle(long ***);
 typestyles::fundamental gettypestyle(unsigned long ***);
 typestyles::nonmeta gettypestyle(std::string ***);
+typestyles::nonmeta gettypestyle(std::type_info ***);                                                                
 
 #endif /* !TYPESTYLES_H__ */

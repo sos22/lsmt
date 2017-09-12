@@ -26,6 +26,9 @@ runtests: tests/compare tests/split tests/smoke
 	./tests/compare
 	./tests/split
 
+lsmt: lsmt.C lib.a
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
 tests/smoke: tests/smoke.o tests/basic.o lib.a
 	$(CXX) $(CXXFLAGS) $^ -o $@
 

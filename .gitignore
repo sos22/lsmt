@@ -8,3 +8,6 @@ tests/compare
 tests/order
 tests/smoke
 tests/split
+
+lsmt
+testfile

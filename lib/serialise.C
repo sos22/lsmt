@@ -27,6 +27,16 @@ bool deserialiser::failed() const { return buf_next > buf_end; }
 
 void deserialiser::fail() { buf_next = buf_end + 1; }
 
+void deserialiser::open(void const * start, size_t sz) {
+	buf_start = reinterpret_cast<uint64_t>(start);
+	buf_end = buf_start + sz;
+	buf_next = buf_start; }
+
+void deserialiser::close() {
+	buf_start = 0;
+	buf_end = 0;
+	buf_next = 1; }
+
 void const * deserialiser::getbytes(size_t sz) {
     if (buf_next + sz > buf_end) {
         fail();
@@ -35,6 +45,8 @@ void const * deserialiser::getbytes(size_t sz) {
         auto res = reinterpret_cast<void const *>(buf_next);
         buf_next += sz;
         return res; } }
+
+bool deserialiser::finished() const { return buf_next >= buf_end; }
 
 template <> void nonmetatypes::serialise(
     std::string const & str,

@@ -48,18 +48,23 @@ template <typename t> void deserialise(t &, deserialiser &); }
  * type, even after a deserialisation failure.  If you care, you
  * should almost certainly call failed() when you're done. */
 struct deserialiser {
-private: uintptr_t const buf_start;
-private: uintptr_t const buf_end;
+private: uintptr_t buf_start{0};
+private: uintptr_t buf_end{0};
     /* Note that buf_next might be past the buf_end if we're failed. */
 private: uintptr_t buf_next{0};
 
 public:  deserialiser(void const * _buf, size_t _size);
+public:  deserialiser() {}
+public:  void open(void const * _buf, size_t _size);
+public:  void close();
 
     /* Has the deserialiser failed? If it has, anything it returned
      * should be treated as suspect. */
 public:  bool failed() const;
     /* Mark the deserialiser as failed. */
 public:  void fail();
+		/* Have we deserialised everything in the buffer? true if we're failed. */
+public:  bool finished() const;
     /* Deserialise one thing, putting the result into @val and
      * advancing the cursor. */
 public:  template <typename t> void deserialise(t & val);
