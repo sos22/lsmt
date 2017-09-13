@@ -1,7 +1,7 @@
 deps = $(srcs:.C=.d)
 
 CXX=clang++
-CXXFLAGS=-std=gnu++1y -fno-strict-aliasing -fno-operator-names -fno-exceptions -g -O3 -Iinclude
+CXXFLAGS=-std=gnu++1y -fno-strict-aliasing -fno-operator-names -fno-exceptions -g -Iinclude
 
 # Warnings:
 CXXFLAGS += -Wall -Werror -Wextra -Wshadow -Winit-self -Wswitch-enum 

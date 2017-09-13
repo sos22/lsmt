@@ -10,7 +10,6 @@
 #include <map>
 #include <typeinfo>
 
-
 #include "meta.H"
 #include "serialise.H"
 
@@ -150,6 +149,59 @@ bool ingress_create::create(char const * path, std::type_info const & schema) {
 	close(fd);
 	return true; }
 
+// A thing for writing one level in the lsmt, when we need to push out the ingress structure.
+//
+// Serialised format:
+// <schema identifier>
+// <values>
+// <list of key offsets, relative to start of key section>
+// <pairs of keys and pointers to values, relative to start of value section>
+// <pointer to key offsets, relative to start of value section>
+// <number of pairs>
+//
+// For now, I'm going to assume it's small enough to hold all keys in memory while we're working,
+// and that we don't need a proper index. We can maybe fix both of those at the same time:
+// build blocks of values and keys, which can be flushed out whenever, keeping the first
+// key in the block to form an entry in the index, which flushes when index blocks get full.
+struct untyped_stratum_writer {
+	serialiser value_serialiser;
+	serialiser key_offset_serialiser;
+	serialiser key_serialiser;
+	unsigned nr_pairs{0};
+	bool write(char const * path, std::type_info const & schema); };
+		
+template <typename schema>
+struct stratum_writer {
+	untyped_stratum_writer ut;
+	void accept(typename schema::key const & k, typename schema::value const & v) {
+		auto o(ut.value_serialiser.cursor);
+		ut.value_serialiser.serialise(v);
+		ut.key_offset_serialiser.serialise(ut.key_serialiser.cursor);
+		ut.key_serialiser.serialise(k);
+		ut.key_serialiser.serialise(o); 
+		ut.nr_pairs++; }
+	bool finalise(char const * path, ingress<schema> const & inp) {
+		for (auto it : inp.cache) accept(it.first, it.second);
+		return ut.write(path, typeid(schema)); } };
+
+bool untyped_stratum_writer::write(char const * filename, std::type_info const & schema) {
+	int fd = open(filename, O_WRONLY|O_CREAT|O_EXCL, 0644);
+	if (fd < 0) return false;
+	auto write_serialiser = [fd] (serialiser const & w) { safe_write(fd, w.stage, w.cursor); };
+	{ std::string ident{schema.name()};
+		serialiser ser;
+		ser.serialise(ident);
+		write_serialiser(ser); }
+	write_serialiser(value_serialiser);
+	write_serialiser(key_offset_serialiser);
+	write_serialiser(key_serialiser);
+	serialiser ser;
+	ser.serialise(value_serialiser.cursor);
+	ser.serialise(nr_pairs);
+	write_serialiser(ser);
+	close(fd); 
+	return true; }
+
 using test_schema = schema<key, value>;
 int main() {
 	char const * const fname = "testfile";
@@ -179,4 +231,9 @@ int main() {
 		assert(b);
 		assert(it.lookup(key("key1")) == value("value3"));
 		assert(it.lookup(key("key2")) == value("value2")); }
+	{ ingress<test_schema> it;
+		bool b = it.open(fname);
+		assert(b);
+		stratum_writer<test_schema> writer;
+		writer.finalise("testfile2", it); }
 	return 0; }
