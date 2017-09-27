@@ -71,7 +71,8 @@ private: what & inner();
 private: void serialise(serialiser & t) const;
 private: void deserialise(deserialiser & t);
 private: void randomise(randomiser & t);
-private: order compare(const what & o) const;
+		// compare is useful even outside of comparer, so make it public.
+public:  order compare(const what & o) const;
 
     // mkjson() is a function template, rather than a class, so friend
     // declaration is tricky. Just make it public instead.

@@ -10,4 +10,4 @@ tests/smoke
 tests/split
 
 lsmt
-testfile
+testfile*
